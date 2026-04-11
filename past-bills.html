@@ -577,6 +577,15 @@ function importCSV() {
                 // Convert to bill format
                 loadedBills = csvData.filter(row => row.invoice_number).map((row, index) => {
                     try {
+                        // Unescape quotes in products_json before parsing
+                        let productsJson = row.products_json || '';
+                        // Remove surrounding quotes if present
+                        if (productsJson.startsWith('"') && productsJson.endsWith('"')) {
+                            productsJson = productsJson.slice(1, -1);
+                        }
+                        // Unescape escaped quotes ("" -> ")
+                        productsJson = productsJson.replace(/""/g, '"');
+                        
                         return {
                             invoiceNumber: row.invoice_number,
                             billingDate: row.billing_date,
@@ -592,7 +601,7 @@ function importCSV() {
                             igst: row.igst,
                             cgst: row.cgst,
                             sgst: row.sgst,
-                            products: row.products_json ? JSON.parse(row.products_json) : [],
+                            products: productsJson ? JSON.parse(productsJson) : [],
                             totals: {
                                 preTotal: row.pre_total,
                                 packing: row.packing,
@@ -607,6 +616,7 @@ function importCSV() {
                     } catch (error) {
                         console.error(`Error parsing row ${index}:`, error);
                         console.error('Row data:', row);
+                        console.error('products_json value:', row.products_json);
                         return null;
                     }
                 }).filter(bill => bill !== null);
