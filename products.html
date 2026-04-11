@@ -1,0 +1,293 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Select Products - Plastron Products</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #64665A;
+        }
+        form {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        fieldset {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th {
+            background-color: #64665A;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        select, input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        input[type="submit"], input[type="reset"] {
+            background-color: #64665A;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        input[type="submit"]:hover, input[type="reset"]:hover {
+            background-color: #555;
+        }
+        .customer-info {
+            background: #e8f4f8;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            border-left: 4px solid #64665A;
+        }
+        .customer-info p {
+            margin: 5px 0;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<h1> Plastron Products </h1>
+
+<div class="customer-info" id="customerInfo"></div>
+
+<form id="productsForm">
+    <fieldset>
+        <input type="submit" id="submitButton" value="Save & Generate Bill"/>
+        <input type="reset" id="resetButton" name="reset" value="Reset"/>
+        <table>
+            <thead>
+            <tr>
+                <th> Product</th>
+                <th> Code Number</th>
+                <th> Unit Price</th>
+                <th> Quantity</th>
+            </tr>
+            </thead>
+            <tbody id="productTableBody">
+            </tbody>
+        </table>
+    </fieldset>
+</form>
+
+<script>
+// CSV Parser - handles quoted fields properly
+function parseCSV(text) {
+    const lines = text.split('\n');
+    const result = [];
+    const headers = lines[0].split(',').map(h => h.trim());
+    
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        
+        const values = [];
+        let currentValue = '';
+        let inQuotes = false;
+        
+        for (let j = 0; j < lines[i].length; j++) {
+            const char = lines[i][j];
+            
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        
+        const obj = {};
+        headers.forEach((header, index) => {
+            obj[header] = values[index] || '';
+        });
+        result.push(obj);
+    }
+    
+    return result;
+}
+
+// Show notification message
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = '#64665A';
+    notification.style.color = 'white';
+    notification.style.padding = '15px 20px';
+    notification.style.borderRadius = '5px';
+    notification.style.zIndex = '1000';
+    notification.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        document.body.removeChild(notification);
+    }, 3000);
+}
+
+// Get bill form data from localStorage
+function getBillFormData() {
+    const formData = localStorage.getItem('billFormData');
+    if (!formData) {
+        showNotification('No customer data found. Please start from generate-bill.html');
+        window.location.href = 'generate-bill.html';
+        return null;
+    }
+    return JSON.parse(formData);
+}
+
+// Display customer info
+function displayCustomerInfo(formData) {
+    const customerInfoDiv = document.getElementById('customerInfo');
+    customerInfoDiv.innerHTML = `
+        <p><strong>Customer:</strong> ${formData.customerName}</p>
+        <p><strong>Address:</strong> ${formData.addressLineOne}, ${formData.addressLineTwo}</p>
+        <p><strong>GSTN:</strong> ${formData.gstn}</p>
+        <p><strong>Contact:</strong> ${formData.contactNumber}</p>
+        <p><strong>Invoice #:</strong> ${formData.taxInvoice}</p>
+        <p><strong>Purchase Order:</strong> ${formData.purchaseOrder || 'N/A'}</p>
+        <p><strong>DC Number:</strong> ${formData.dcNumber || 'N/A'}</p>
+        <p><strong>Add P&F:</strong> ${formData.packing ? 'Yes (1%)' : 'No'}</p>
+    `;
+}
+
+// Load products from CSV for selected customer
+async function loadProducts(customerId) {
+    let products = [];
+    try {
+        const response = await fetch('products.csv');
+        const csvText = await response.text();
+        products = parseCSV(csvText);
+    } catch (error) {
+        console.error('CSV loading failed:', error.message);
+        document.getElementById('productTableBody').innerHTML = '<tr><td colspan="4">Error loading products. Please ensure products.csv exists.</td></tr>';
+        return;
+    }
+    
+    try {
+        // Filter products by customer_id
+        const customerProducts = products.filter(p => p.customer_id === customerId.toString());
+        
+        const tableBody = document.getElementById('productTableBody');
+        tableBody.innerHTML = '';
+        
+        if (customerProducts.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="4">No products found for this customer</td></tr>';
+            return;
+        }
+        
+        customerProducts.forEach(product => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <select name="product_${product.part_id}" class="product-select" data-part-id="${product.part_id}">
+                        <option value="">-- Select --</option>
+                        <option value="${product.part_id}" selected>${product.part_name}</option>
+                    </select>
+                </td>
+                <td>${product.code_number}</td>
+                <td>${parseFloat(product.unit_price).toFixed(2)}</td>
+                <td>
+                    <input type="number" name="quantity_${product.part_id}" class="quantity-input" min="0" placeholder="0" data-part-id="${product.part_id}" data-unit-price="${product.unit_price}" data-part-name="${product.part_name}" data-code-number="${product.code_number}"/>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error loading products:', error);
+        document.getElementById('productTableBody').innerHTML = '<tr><td colspan="4">Error loading products</td></tr>';
+    }
+}
+
+// Form submission
+document.getElementById('productsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = getBillFormData();
+    if (!formData) return;
+    
+    // Collect selected products and quantities
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    const selectedProducts = [];
+    
+    quantityInputs.forEach(input => {
+        const quantity = parseInt(input.value);
+        if (quantity > 0) {
+            selectedProducts.push({
+                partId: input.dataset.partId,
+                partName: input.dataset.partName,
+                codeNumber: input.dataset.codeNumber,
+                unitPrice: parseFloat(input.dataset.unitPrice),
+                quantity: quantity
+            });
+        }
+    });
+    
+    if (selectedProducts.length === 0) {
+        showNotification('Please select at least one product with quantity > 0');
+        return;
+    }
+    
+    // Add products to form data
+    formData.products = selectedProducts;
+    
+    // Store in localStorage
+    localStorage.setItem('billFormData', JSON.stringify(formData));
+    
+    // Navigate to bill-gen page
+    window.location.href = 'bill-gen.html';
+});
+
+// Reset button - clear localStorage and go back
+document.getElementById('resetButton').addEventListener('click', function() {
+    localStorage.removeItem('billFormData');
+    window.location.href = 'generate-bill.html';
+});
+
+// Initialize page
+async function init() {
+    const formData = getBillFormData();
+    if (!formData) return;
+    
+    displayCustomerInfo(formData);
+    await loadProducts(formData.customerId);
+}
+
+// Initialize on page load
+init();
+</script>
+</body>
+</html>

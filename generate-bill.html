@@ -1,0 +1,217 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Generate Bill - Plastron Products</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #64665A;
+        }
+        form {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        p {
+            margin: 15px 0;
+        }
+        label {
+            display: inline-block;
+            width: 200px;
+            font-weight: bold;
+        }
+        select, input[type="text"], input[type="checkbox"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        select, input[type="text"] {
+            width: 300px;
+        }
+        input[type="submit"] {
+            background-color: #64665A;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        input[type="submit"]:hover {
+            background-color: #555;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+<h1> Plastron Products </h1>
+<form id="billForm">
+    <p>
+        <label for="customer">Company Name:</label>
+        <select name="customer" id="customer" required>
+            <option value="">-- Select Customer --</option>
+        </select>
+    </p>
+    <p>
+        <label for="taxInvoice">Tax Invoice number:</label>
+        <input type="text" id="taxInvoice" name="taxInvoice" required placeholder="Enter invoice number"/>
+    </p>
+    <p>
+        <label for="purchaseOrder">Purchase Order:</label>
+        <input type="text" id="purchaseOrder" name="purchaseOrder" placeholder="Enter PO number"/>
+    </p>
+    <p>
+        <label for="dcNumber">DC Number:</label>
+        <input type="text" id="dcNumber" name="dcNumber" placeholder="Enter DC number"/>
+    </p>
+    <p>
+        <label for="packing">Add P&F (1%):</label>
+        <input type="checkbox" id="packing" name="packing"/>
+    </p>
+    <p><input type="submit" value="Submit"/></p>
+</form>
+
+<script>
+// CSV Parser - handles quoted fields properly
+function parseCSV(text) {
+    const lines = text.split('\n');
+    const result = [];
+    const headers = lines[0].split(',').map(h => h.trim());
+    
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        
+        const values = [];
+        let currentValue = '';
+        let inQuotes = false;
+        
+        for (let j = 0; j < lines[i].length; j++) {
+            const char = lines[i][j];
+            
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        
+        const obj = {};
+        headers.forEach((header, index) => {
+            obj[header] = values[index] || '';
+        });
+        result.push(obj);
+    }
+    
+    return result;
+}
+
+// Show notification message
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = '#64665A';
+    notification.style.color = 'white';
+    notification.style.padding = '15px 20px';
+    notification.style.borderRadius = '5px';
+    notification.style.zIndex = '1000';
+    notification.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        document.body.removeChild(notification);
+    }, 3000);
+}
+
+// Load customers from CSV
+async function loadCustomers() {
+    let customers = [];
+    try {
+        const response = await fetch('customers.csv');
+        const csvText = await response.text();
+        customers = parseCSV(csvText);
+    } catch (error) {
+        console.error('CSV loading failed:', error.message);
+        document.getElementById('customer').innerHTML = '<option value="">Error loading customers. Please ensure customers.csv exists.</option>';
+        return;
+    }
+    
+    const customerSelect = document.getElementById('customer');
+    customers.forEach(customer => {
+        const option = document.createElement('option');
+        option.value = customer.customer_id;
+        option.textContent = customer.customer_name;
+        option.dataset.customer = JSON.stringify(customer);
+        customerSelect.appendChild(option);
+    });
+}
+
+// Form submission
+document.getElementById('billForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const customerSelect = document.getElementById('customer');
+    const selectedOption = customerSelect.options[customerSelect.selectedIndex];
+    
+    if (!selectedOption || !selectedOption.value) {
+        showNotification('Please select a customer');
+        return;
+    }
+    
+    const customerData = JSON.parse(selectedOption.dataset.customer);
+    
+    const formData = {
+        customerId: customerData.customer_id,
+        customerName: customerData.customer_name,
+        addressLineOne: customerData.address_line_one,
+        addressLineTwo: customerData.address_line_two,
+        gstn: customerData.gstn,
+        contactNumber: customerData.contact_number,
+        customerMailId: customerData.customer_mail_id,
+        cgst: parseFloat(customerData.cgst) || 0,
+        sgst: parseFloat(customerData.sgst) || 0,
+        igst: parseFloat(customerData.igst) || 0,
+        taxInvoice: document.getElementById('taxInvoice').value,
+        purchaseOrder: document.getElementById('purchaseOrder').value,
+        dcNumber: document.getElementById('dcNumber').value,
+        packing: document.getElementById('packing').checked,
+        billingDate: new Date().toISOString().split('T')[0]
+    };
+    
+    // Validate required fields
+    if (!formData.taxInvoice) {
+        showNotification('Please enter tax invoice number');
+        return;
+    }
+    
+    // Store in localStorage
+    localStorage.setItem('billFormData', JSON.stringify(formData));
+    
+    // Navigate to products page
+    window.location.href = 'products.html';
+});
+
+// Load customers on page load
+loadCustomers();
+</script>
+</body>
+</html>

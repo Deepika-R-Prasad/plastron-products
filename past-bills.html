@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf-8">
+    <title>Past Bills - Plastron Products</title>
+    <style>
+    .invoice-box {
+        max-width: 800px;
+        margin: auto;
+        padding: 30px;
+        border: collapse;
+        box-shadow: 0 0 10px rgba(0, 0, 0, .15);
+        font-size: 12px;
+        line-height: 18px;
+        font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+        color: #555;
+    }
+
+    .invoice-box table {
+        margin: auto;
+        width: 100%;
+        line-height: inherit;
+        text-align: left;
+    }
+
+    .invoice-box table td {
+        padding: 5px;
+        vertical-align: top;
+    }
+
+    .invoice-box table tr td:nth-child(2) {
+        text-align: right;
+    }
+
+    .invoice-box table tr.top table td {
+        padding-bottom: 18px;
+    }
+
+    .invoice-box table tr.top table td.title {
+        margin: auto;
+        font-size: 30px;
+        line-height: 30px;
+        color: #333;
+    }
+
+    .invoice-box table tr.information table td {
+        padding-bottom: 30px;
+    }
+
+    .invoice-box table tr.heading td {
+        margin: auto;
+        background: #eee;
+        border-bottom: 1px solid #ddd;
+        font-weight: bold;
+    }
+
+    .invoice-box table tr.details td {
+        margin: auto;
+        padding-bottom: 20px;
+    }
+
+    .invoice-box table tr.item td{
+        margin: auto;
+        border-bottom: 1px solid #eee;
+    }
+
+    .invoice-box table tr.item.last td {
+        margin: auto;
+        border-bottom: none;
+    }
+
+    .invoice-box table tr.total td:nth-child(2) {
+        margin: auto;
+        border-top: 2px solid #eee;
+        font-weight: bold;
+    }
+
+    .button {
+        background-color: #64665A;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 12px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+
+    @media only screen and (max-width: 600px) {
+        .invoice-box table tr.top table td {
+            margin: auto;
+            width: 100%;
+            display: block;
+            text-align: center;
+        }
+
+        .invoice-box table tr.information table td {
+            margin: auto;
+            width: 100%;
+            display: block;
+            text-align: center;
+        }
+    }
+    #customers {
+        font-family: Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    #customers td, #customers th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    #customers tr:nth-child(even){background-color: #f2f2f2;}
+
+    #customers tr:hover {background-color: #ddd;}
+
+    #customers th {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        text-align: left;
+        background-color: #64665A;
+        color: white;
+    }
+    .rtl {
+        direction: rtl;
+        font-family: Tahoma, 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+    }
+
+    .rtl table {
+        text-align: right;
+    }
+
+    .rtl table tr td:nth-child(2) {
+        text-align: left;
+    }
+
+    .bill-list {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+    }
+
+    .bill-list h1 {
+        color: #64665A;
+        text-align: center;
+    }
+
+    .bill-list table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .bill-list th {
+        background-color: #64665A;
+        color: white;
+        padding: 12px;
+        text-align: left;
+    }
+
+    .bill-list td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        cursor: pointer;
+    }
+
+    .bill-list tr:hover {
+        background-color: #f0f0f0;
+    }
+
+    .bill-list .no-bills {
+        text-align: center;
+        color: #666;
+        padding: 40px;
+    }
+
+    .controls {
+        text-align: center;
+        margin: 20px 0;
+    }
+    </style>
+    <script>
+    function printPage() {
+        window.print();
+    }
+    </script>
+</head>
+
+<body>
+
+<div class="bill-list" id="billListView">
+    <h1>Past Bills</h1>
+    <div class="controls">
+        <button class="button" onclick="goHome()">Back to Home</button>
+        <button class="button" onclick="importCSV()">Import CSV</button>
+        <button class="button" onclick="exitAndClear()">Exit & Clear Data</button>
+    </div>
+    <table id="billsTable">
+        <thead>
+            <tr>
+                <th>Invoice #</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Total</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="billsTableBody">
+        </tbody>
+    </table>
+</div>
+
+<div class="invoice-box" id="billView" style="display: none;">
+    <table cellpadding="0" cellspacing="0">
+        <tr class="top">
+            <td colspan="2">
+                <table>
+                    <tr>
+                        <td>
+                            <h1 style="font-family:microsoft jhenghei ui light; color:maroon;">
+                                <b> PLASTRON PRODUCTS</b>
+                            </h1><br>
+                            No. 7 Pete Chennappa Industrial estate<br>
+                            Kamakshipalya, Bangalore 560079<br>
+                            <b>Mobile:</b> +91 9844216696<br>
+                            <b>GST No:</b> 29AFVPA8902M1ZS<br>
+                            <b>Our DC No:</b> 1388<br>
+                            <b>TIN No:</b> 29821429050
+                        </td>
+                        <td>
+                            <b>Date/Time:</b> <span id="billingDate"></span><br>
+                            <b>TAX Invoice #:</b> <b><span id="taxInvoice"></span></b><br>
+                            <b>Name:</b> <span id="customerName"></span><br>
+                            <b>Address:</b> <span id="addressLineOne"></span><br>
+                                    <span id="addressLineTwo"></span><br>
+                            <b>Phone:</b> <span id="contactNumber"></span><br>
+                            <b>GSTN:</b> <span id="gstn"></span><br>
+                            <b>Your DC/Purchase Order No:</b> <span id="dcNumber"></span>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <table id="customers">
+            <tr>
+                <th>Sl.</th>
+                <th>Description</th>
+                <th>Qty<br>(in nos.)</th>
+                <th>Unit Price</th>
+                <th>Amount</th>
+            </tr>
+            <tbody id="productTableBody">
+            </tbody>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"><b>Subtotal</b></td>
+                <td id="preTotal"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>Add P/&F(1%)</td>
+                <td></td>
+                <td></td>
+                <td id="packing"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"><b>Total</b></td>
+                <td id="subTotal"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"><b>IGST@<span id="igstRate"></span>%</b></td>
+                <td id="igst"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"><b>CGST@<span id="cgstRate"></span>%</b></td>
+                <td id="cgst"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"><b>SGST@<span id="sgstRate"></span>%</b></td>
+                <td id="sgst"></td>
+            </tr>
+            <tr>
+                <th colspan="2">EWAY Bill No: <span id="eway"></span></th>
+                <th colspan="2">Grand Total</th>
+                <th id="grandTotal"></th>
+            </tr>
+            <tr>
+                <td colspan="2">Transporter: <span id="vehicle"></span></td>
+                <td colspan="3"></td>
+            </tr>
+
+            <tr>
+                <td colspan="3"></td>
+                <td colspan="2"><center><b><br><br>for PLASTRON PRODUCTS</b></center></td>
+            </tr>
+    </table>
+    </table>
+    </div>
+    <div class="controls" id="billViewControls" style="display: none;">
+        <button class="button" onclick="printPage()">Print</button>
+        <button class="button" onclick="goBack()">Back</button>
+    </div>
+
+<script>
+let currentBill = null;
+let loadedBills = [];
+
+// Show notification message
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = '#64665A';
+    notification.style.color = 'white';
+    notification.style.padding = '15px 20px';
+    notification.style.borderRadius = '5px';
+    notification.style.zIndex = '1000';
+    notification.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        document.body.removeChild(notification);
+    }, 3000);
+}
+
+// CSV Parser - handles quoted fields properly
+function parseCSV(text) {
+    const lines = text.split('\n');
+    const result = [];
+    const headers = lines[0].split(',').map(h => h.trim());
+    
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        
+        const values = [];
+        let currentValue = '';
+        let inQuotes = false;
+        
+        for (let j = 0; j < lines[i].length; j++) {
+            const char = lines[i][j];
+            
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        
+        const obj = {};
+        headers.forEach((header, index) => {
+            obj[header] = values[index] || '';
+        });
+        result.push(obj);
+    }
+    
+    return result;
+}
+
+// Load bills from CSV file
+async function loadBills() {
+    try {
+        const response = await fetch('past-bills.csv');
+        const csvText = await response.text();
+        const csvData = parseCSV(csvText);
+        
+        // Skip header row and convert to bill format
+        loadedBills = csvData.filter(row => row.invoice_number).map(row => ({
+            invoiceNumber: row.invoice_number,
+            billingDate: row.billing_date,
+            customerName: row.customer_name,
+            addressLineOne: row.customer_address ? row.customer_address.split(',')[0] : '',
+            addressLineTwo: row.customer_address ? row.customer_address.split(',').slice(1).join(',').trim() : '',
+            gstn: row.gstn,
+            contactNumber: row.contact_number,
+            purchaseOrder: row.purchase_order || '',
+            dcNumber: row.dc_number || '',
+            eWayBill: row.eway_bill || '',
+            transporter: row.transporter || '',
+            igst: row.igst,
+            cgst: row.cgst,
+            sgst: row.sgst,
+            products: row.products_json ? JSON.parse(row.products_json) : [],
+            totals: {
+                preTotal: row.pre_total,
+                packing: row.packing,
+                subTotal: row.sub_total,
+                igst: row.igst_amount,
+                cgst: row.cgst_amount,
+                sgst: row.sgst_amount,
+                grandTotal: row.grand_total
+            },
+            createdAt: row.created_at || new Date().toISOString()
+        }));
+    } catch (error) {
+        console.warn('CSV loading failed (CORS error when opening file://), no bills to display:', error.message);
+        loadedBills = [];
+    }
+    
+    if (loadedBills.length === 0) {
+        document.getElementById('billsTableBody').innerHTML = '<tr><td colspan="5" class="no-bills">No past bills found. Import a CSV file or generate a new bill.</td></tr>';
+        return;
+    }
+    
+    const tableBody = document.getElementById('billsTableBody');
+    tableBody.innerHTML = '';
+    
+    // Sort by date (newest first)
+    loadedBills.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    loadedBills.forEach((bill, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${bill.invoiceNumber}</td>
+            <td>${bill.billingDate}</td>
+            <td>${bill.customerName}</td>
+            <td>₹${bill.totals.grandTotal}</td>
+            <td><button class="button" onclick="viewBill('${bill.invoiceNumber}')">View</button></td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// View specific bill
+function viewBill(invoiceNumber) {
+    currentBill = loadedBills.find(b => b.invoiceNumber === invoiceNumber);
+    
+    if (!currentBill) return;
+    
+    // Hide list view
+    document.getElementById('billListView').style.display = 'none';
+    
+    // Show bill view
+    document.getElementById('billView').style.display = 'block';
+    document.getElementById('billViewControls').style.display = 'block';
+    
+    // Populate bill
+    populateBill(currentBill);
+}
+
+// Populate bill with data
+function populateBill(bill) {
+    // Customer info
+    document.getElementById('billingDate').textContent = bill.billingDate;
+    document.getElementById('taxInvoice').textContent = bill.invoiceNumber;
+    document.getElementById('customerName').textContent = bill.customerName;
+    document.getElementById('addressLineOne').textContent = bill.addressLineOne;
+    document.getElementById('addressLineTwo').textContent = bill.addressLineTwo;
+    document.getElementById('contactNumber').textContent = bill.contactNumber;
+    document.getElementById('gstn').textContent = bill.gstn;
+    document.getElementById('dcNumber').textContent = bill.purchaseOrder || bill.dcNumber || '';
+    
+    // Tax rates
+    document.getElementById('igstRate').textContent = bill.igst;
+    document.getElementById('cgstRate').textContent = bill.cgst;
+    document.getElementById('sgstRate').textContent = bill.sgst;
+    
+    // E-way and transporter
+    document.getElementById('eway').textContent = bill.eWayBill || '';
+    document.getElementById('vehicle').textContent = bill.transporter || '';
+    
+    // Product table
+    const productTableBody = document.getElementById('productTableBody');
+    productTableBody.innerHTML = '';
+    
+    bill.products.forEach((product, index) => {
+        const amount = product.quantity * product.unitPrice;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${product.partName}<br>${product.codeNumber}</td>
+            <td>${product.quantity}</td>
+            <td>${product.unitPrice.toFixed(2)}</td>
+            <td>${amount.toFixed(2)}</td>
+        `;
+        productTableBody.appendChild(row);
+    });
+    
+    // Totals
+    document.getElementById('preTotal').textContent = bill.totals.preTotal;
+    document.getElementById('packing').textContent = bill.totals.packing;
+    document.getElementById('subTotal').textContent = bill.totals.subTotal;
+    document.getElementById('igst').textContent = bill.totals.igst;
+    document.getElementById('cgst').textContent = bill.totals.cgst;
+    document.getElementById('sgst').textContent = bill.totals.sgst;
+    document.getElementById('grandTotal').textContent = bill.totals.grandTotal;
+}
+
+// Go back to list
+function goBack() {
+    document.getElementById('billView').style.display = 'none';
+    document.getElementById('billViewControls').style.display = 'none';
+    document.getElementById('billListView').style.display = 'block';
+    currentBill = null;
+}
+
+// Go home
+function goHome() {
+    window.location.href = 'index.html';
+}
+
+// Import CSV file
+function importCSV() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) {
+            document.body.removeChild(input);
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const csvText = e.target.result;
+                const csvData = parseCSV(csvText);
+                
+                // Convert to bill format
+                loadedBills = csvData.filter(row => row.invoice_number).map(row => ({
+                    invoiceNumber: row.invoice_number,
+                    billingDate: row.billing_date,
+                    customerName: row.customer_name,
+                    addressLineOne: row.customer_address ? row.customer_address.split(',')[0] : '',
+                    addressLineTwo: row.customer_address ? row.customer_address.split(',').slice(1).join(',').trim() : '',
+                    gstn: row.gstn,
+                    contactNumber: row.contact_number,
+                    purchaseOrder: row.purchase_order || '',
+                    dcNumber: row.dc_number || '',
+                    eWayBill: row.eway_bill || '',
+                    transporter: row.transporter || '',
+                    igst: row.igst,
+                    cgst: row.cgst,
+                    sgst: row.sgst,
+                    products: row.products_json ? JSON.parse(row.products_json) : [],
+                    totals: {
+                        preTotal: row.pre_total,
+                        packing: row.packing,
+                        subTotal: row.sub_total,
+                        igst: row.igst_amount,
+                        cgst: row.cgst_amount,
+                        sgst: row.sgst_amount,
+                        grandTotal: row.grand_total
+                    },
+                    createdAt: row.created_at || new Date().toISOString()
+                }));
+                
+                // Refresh the display
+                displayBills();
+                showNotification(`Imported ${loadedBills.length} bills from CSV!`);
+            } catch (error) {
+                console.error('Error parsing CSV:', error);
+                showNotification('Error parsing CSV file. Please check the file format.');
+            }
+            
+            document.body.removeChild(input);
+        };
+        
+        reader.onerror = function() {
+            showNotification('Error reading CSV file.');
+            document.body.removeChild(input);
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    input.click();
+}
+
+// Display bills from loadedBills array
+function displayBills() {
+    if (loadedBills.length === 0) {
+        document.getElementById('billsTableBody').innerHTML = '<tr><td colspan="5" class="no-bills">No past bills found. Import a CSV file or generate a new bill.</td></tr>';
+        return;
+    }
+    
+    const tableBody = document.getElementById('billsTableBody');
+    tableBody.innerHTML = '';
+    
+    // Sort by date (newest first)
+    loadedBills.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    loadedBills.forEach((bill, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${bill.invoiceNumber}</td>
+            <td>${bill.billingDate}</td>
+            <td>${bill.customerName}</td>
+            <td>₹${bill.totals.grandTotal}</td>
+            <td><button class="button" onclick="viewBill('${bill.invoiceNumber}')">View</button></td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// Exit and clear all data
+function exitAndClear() {
+    if (confirm('Are you sure you want to exit? This will clear all cached data.')) {
+        // Clear all localStorage
+        localStorage.clear();
+        // Clear loaded bills
+        loadedBills = [];
+        currentBill = null;
+        // Redirect to index.html
+        window.location.href = 'index.html';
+    }
+}
+
+// Initialize
+loadBills();
+</script>
+</body>
+</html>

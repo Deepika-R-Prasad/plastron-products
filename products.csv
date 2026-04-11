@@ -1,0 +1,3 @@
+part_id,customer_id,part_name,part_number,code_number,hsn_code,unit_price,charge_type,cgst,sgst,igst
+1,1,Terminal CRCA,50,QL-50-D-100,8544,0.96,Standard,9,9,0
+2,1,Two Hole Terminal,90,2M4-90-Z-6,8544,1.54,Standard,9,9,0

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf-8">
+    <title>Plastron Products</title>
+    <style>
+    .invoice-box {
+        max-width: 800px;
+        margin: auto;
+        padding: 30px;
+        border: collapse;
+        box-shadow: 0 0 10px rgba(0, 0, 0, .15);
+        font-size: 12px;
+        line-height: 18px;
+        font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+        color: #555;
+    }
+
+    .invoice-box table {
+        margin: auto;
+        width: 100%;
+        line-height: inherit;
+        text-align: left;
+    }
+
+    .invoice-box table td {
+        padding: 5px;
+        vertical-align: top;
+    }
+
+    .invoice-box table tr td:nth-child(2) {
+        text-align: right;
+    }
+
+    .invoice-box table tr.top table td {
+        padding-bottom: 18px;
+    }
+
+    .invoice-box table tr.top table td.title {
+        margin: auto;
+        font-size: 30px;
+        line-height: 30px;
+        color: #333;
+    }
+
+    .invoice-box table tr.information table td {
+        padding-bottom: 30px;
+    }
+
+    .invoice-box table tr.heading td {
+        margin: auto;
+        background: #eee;
+        border-bottom: 1px solid #ddd;
+        font-weight: bold;
+    }
+
+    .invoice-box table tr.details td {
+        margin: auto;
+        padding-bottom: 20px;
+    }
+
+    .invoice-box table tr.item td{
+        margin: auto;
+        border-bottom: 1px solid #eee;
+    }
+
+    .invoice-box table tr.item.last td {
+        margin: auto;
+        border-bottom: none;
+    }
+
+    .invoice-box table tr.total td:nth-child(2) {
+        margin: auto;
+        border-top: 2px solid #eee;
+        font-weight: bold;
+    }
+
+    .button {
+        background-color: #64665A;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 12px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+
+    @media only screen and (max-width: 600px) {
+        .invoice-box table tr.top table td {
+            margin: auto;
+            width: 100%;
+            display: block;
+            text-align: center;
+        }
+
+        .invoice-box table tr.information table td {
+            margin: auto;
+            width: 100%;
+            display: block;
+            text-align: center;
+        }
+    }
+    #customers {
+        font-family: Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    #customers td, #customers th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    #customers tr:nth-child(even){background-color: #f2f2f2;}
+
+    #customers tr:hover {background-color: #ddd;}
+
+    #customers th {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        text-align: left;
+        background-color: #64665A;
+        color: white;
+    }
+    /** RTL **/
+    .rtl {
+        direction: rtl;
+        font-family: Tahoma, 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+    }
+
+    .rtl table {
+        text-align: right;
+    }
+
+    .rtl table tr td:nth-child(2) {
+        text-align: left;
+    }
+
+    </style>
+    <script>
+    function printPage() {
+        window.print();
+    }
+    
+    function exportBillToCSV() {
+        const formData = currentFormData;
+        if (!formData) return;
+        
+        // Get e-way bill and transporter values
+        const eWayBill = document.getElementById('eway').value;
+        const transporter = document.getElementById('vehicle').value;
+        
+        // Calculate totals
+        const totals = calculateTotals(formData);
+        
+        // Create CSV row for this bill (matching past-bills.csv format)
+        const productsJson = JSON.stringify(formData.products);
+        const address = `${formData.addressLineOne}, ${formData.addressLineTwo}`;
+        const csvRow = `${formData.taxInvoice},${formData.billingDate},"${formData.customerName}","${address}",${formData.gstn},${formData.contactNumber},"${formData.purchaseOrder || ''}","${formData.dcNumber || ''}","${eWayBill}","${transporter}",${formData.igst},${formData.cgst},${formData.sgst},"${productsJson.replace(/"/g, '""')}",${totals.preTotal},${totals.packing},${totals.subTotal},${totals.igst},${totals.cgst},${totals.sgst},${totals.grandTotal},${new Date().toISOString()}`;
+        
+        // Create download link with header
+        const csvContent = 'invoice_number,billing_date,customer_name,customer_address,gstn,contact_number,purchase_order,dc_number,eway_bill,transporter,igst,cgst,sgst,products_json,pre_total,packing,sub_total,igst_amount,cgst_amount,sgst_amount,grand_total,created_at\n' + csvRow;
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `bill_${formData.taxInvoice}_${formData.billingDate}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showNotification('Bill exported to CSV! Manually add this row to past-bills.csv file on GitHub.');
+    }
+    </script>
+</head>
+
+<body>
+
+<div class="invoice-box">
+    <form id="billForm">
+    <table cellpadding="0" cellspacing="0">
+        <tr class="top">
+            <td colspan="2">
+                <table>
+                    <tr>
+                        <td>
+                            <h1 style="font-family:microsoft jhenghei ui light; color:maroon;">
+                                <b> PLASTRON PRODUCTS</b>
+                            </h1><br>
+                            No. 7 Pete Chennappa Industrial estate<br>
+                            Kamakshipalya, Bangalore 560079<br>
+                            <b>Mobile:</b> +91 9844216696<br>
+                            <b>GST No:</b> 29AFVPA8902M1ZS<br>
+                            <b>Our DC No:</b> 1388<br>
+                            <b>TIN No:</b> 29821429050
+                        </td>
+                        <td>
+                            <b>Date/Time:</b> <span id="billingDate"></span><br>
+                            <b>TAX Invoice #:</b> <b><span id="taxInvoice"></span></b><br>
+                            <b>Name:</b> <span id="customerName"></span><br>
+                            <b>Address:</b> <span id="addressLineOne"></span><br>
+                                    <span id="addressLineTwo"></span><br>
+                            <b>Phone:</b> <span id="contactNumber"></span><br>
+                            <b>GSTN:</b> <span id="gstn"></span><br>
+                            <b>Your DC/Purchase Order No:</b> <span id="dcNumber"></span>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <table id="customers">
+            <tr>
+                <th>Sl.</th>
+                <th>Description</th>
+                <th>Qty<br>(in nos.)</th>
+                <th>Unit Price</th>
+                <th>Amount</th>
+            </tr>
+            <tbody id="productTableBody">
+            </tbody>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"><b>Subtotal</b></td>
+                <td id="preTotal"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>Add P/&F(1%)</td>
+                <td></td>
+                <td></td>
+                <td id="packing"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"><b>Total</b></td>
+                <td id="subTotal"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"><b>IGST@<span id="igstRate"></span>%</b></td>
+                <td id="igst"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"><b>CGST@<span id="cgstRate"></span>%</b></td>
+                <td id="cgst"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td colspan="2"><b>SGST@<span id="sgstRate"></span>%</b></td>
+                <td id="sgst"></td>
+            </tr>
+            <tr>
+                <th colspan="2">EWAY Bill No: <input type="text" id="eway" name="eway"></th>
+                <th colspan="2">Grand Total</th>
+                <th id="grandTotal"></th>
+            </tr>
+            <tr>
+                <td colspan="2">Transporter: <input type="text" id="vehicle" name="vehicle"></td>
+                <td colspan="3"></td>
+            </tr>
+
+            <tr>
+                <td colspan="3"></td>
+                <td colspan="2"><center><b><br><br>for PLASTRON PRODUCTS</b></center></td>
+            </tr>
+    </table>
+    </table>
+    </form>
+    <button class="button" onclick="printPage()">Print</button>
+    <button class="button" onclick="exportBillToCSV()">Export to CSV</button>
+    <button class="button" onclick="goBack()">Back</button>
+    <button class="button" onclick="exitAndClear()">Exit & Clear Data</button>
+</div>
+
+<script>
+// Round off to 2 decimal places
+function roundOff(value) {
+    return Math.round(value * 100) / 100;
+}
+
+// Global variable to store form data
+let currentFormData = null;
+
+// Show notification message
+function showNotification(message) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = '#64665A';
+    notification.style.color = 'white';
+    notification.style.padding = '15px 20px';
+    notification.style.borderRadius = '5px';
+    notification.style.zIndex = '1000';
+    notification.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        document.body.removeChild(notification);
+    }, 3000);
+}
+
+// Get bill form data from localStorage
+function getBillFormData() {
+    const formData = localStorage.getItem('billFormData');
+    if (!formData) {
+        showNotification('No data found. Please start from generate-bill.html');
+        window.location.href = 'generate-bill.html';
+        return null;
+    }
+    return JSON.parse(formData);
+}
+
+// Calculate totals
+function calculateTotals(formData) {
+    let preTotal = 0;
+    
+    // Calculate preTotal (sum of all product amounts)
+    formData.products.forEach(product => {
+        const amount = product.quantity * product.unitPrice;
+        preTotal += amount;
+    });
+    
+    let packing = 0;
+    let subTotal = preTotal;
+    
+    // Add packing charges if enabled
+    if (formData.packing) {
+        packing = roundOff(preTotal / 100);
+        subTotal = roundOff(preTotal + packing);
+    }
+    
+    // Calculate taxes based on subtotal (after packing is added)
+    const cgst = roundOff((formData.cgst / 100) * subTotal);
+    const sgst = roundOff((formData.sgst / 100) * subTotal);
+    const igst = roundOff((formData.igst / 100) * subTotal);
+    
+    // Calculate grand total (ceiling of subtotal + taxes)
+    const totalBeforeCeiling = subTotal + cgst + sgst + igst;
+    const grandTotal = Math.ceil(totalBeforeCeiling);
+    
+    return {
+        preTotal: preTotal.toFixed(2),
+        packing: packing.toFixed(2),
+        subTotal: subTotal.toFixed(2),
+        cgst: cgst.toFixed(2),
+        sgst: sgst.toFixed(2),
+        igst: igst.toFixed(2),
+        totalBeforeCeiling: totalBeforeCeiling.toFixed(2),
+        grandTotal: grandTotal.toFixed(2)
+    };
+}
+
+// Populate bill
+function populateBill(formData) {
+    // Customer info
+    document.getElementById('billingDate').textContent = formData.billingDate;
+    document.getElementById('taxInvoice').textContent = formData.taxInvoice;
+    document.getElementById('customerName').textContent = formData.customerName;
+    document.getElementById('addressLineOne').textContent = formData.addressLineOne;
+    document.getElementById('addressLineTwo').textContent = formData.addressLineTwo;
+    document.getElementById('contactNumber').textContent = formData.contactNumber;
+    document.getElementById('gstn').textContent = formData.gstn;
+    document.getElementById('dcNumber').textContent = formData.purchaseOrder || formData.dcNumber || '';
+    
+    // Tax rates
+    document.getElementById('igstRate').textContent = formData.igst;
+    document.getElementById('cgstRate').textContent = formData.cgst;
+    document.getElementById('sgstRate').textContent = formData.sgst;
+    
+    // Product table
+    const productTableBody = document.getElementById('productTableBody');
+    productTableBody.innerHTML = '';
+    
+    formData.products.forEach((product, index) => {
+        const amount = product.quantity * product.unitPrice;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${product.partName}<br>${product.codeNumber}</td>
+            <td>${product.quantity}</td>
+            <td>${product.unitPrice.toFixed(2)}</td>
+            <td>${amount.toFixed(2)}</td>
+        `;
+        productTableBody.appendChild(row);
+    });
+    
+    // Calculate and display totals
+    const totals = calculateTotals(formData);
+    
+    document.getElementById('preTotal').textContent = totals.preTotal;
+    document.getElementById('packing').textContent = totals.packing;
+    document.getElementById('subTotal').textContent = totals.subTotal;
+    document.getElementById('igst').textContent = totals.igst;
+    document.getElementById('cgst').textContent = totals.cgst;
+    document.getElementById('sgst').textContent = totals.sgst;
+    document.getElementById('grandTotal').textContent = totals.grandTotal;
+}
+
+// Go back to products page
+function goBack() {
+    window.location.href = 'products.html';
+}
+
+// Exit and clear all data
+function exitAndClear() {
+    if (confirm('Are you sure you want to exit? This will clear all cached data including form data and past bills.')) {
+        // Clear all localStorage
+        localStorage.clear();
+        // Clear global variable
+        currentFormData = null;
+        // Redirect to index.html
+        window.location.href = 'index.html';
+    }
+}
+
+// Initialize page
+function init() {
+    const formData = getBillFormData();
+    if (!formData) return;
+    
+    // Store in global variable for use in saveBillToLocalStorage
+    currentFormData = formData;
+    
+    populateBill(formData);
+    
+    // Clear localStorage after loading to prevent data leaks
+    localStorage.removeItem('billFormData');
+}
+
+// Initialize on page load
+init();
+</script>
+</body>
+</html>

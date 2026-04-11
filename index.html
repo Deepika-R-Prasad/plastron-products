@@ -1,0 +1,85 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Plastron Products</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 100px auto;
+            padding: 40px;
+            text-align: center;
+        }
+        h1 {
+            color: #64665A;
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 40px;
+        }
+        .options {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
+        }
+        .option-card {
+            background: #f9f9f9;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 250px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .option-card h2 {
+            color: #64665A;
+            margin-bottom: 10px;
+        }
+        .option-card p {
+            color: #666;
+            font-size: 14px;
+        }
+        .icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>PLASTRON PRODUCTS</h1>
+    <p class="subtitle">No. 7 Pete Chennappa Industrial Estate, Kamakshipalya, Bangalore 560079</p>
+    
+    <div class="options">
+        <div class="option-card" onclick="generateNewBill()">
+            <div class="icon">📝</div>
+            <h2>Generate New Bill</h2>
+            <p>Create a new invoice for a customer</p>
+        </div>
+        
+        <div class="option-card" onclick="viewPastBills()">
+            <div class="icon">📋</div>
+            <h2>View Past Bills</h2>
+            <p>Browse and print previous invoices</p>
+        </div>
+    </div>
+
+    <script>
+    function generateNewBill() {
+        window.location.href = 'generate-bill.html';
+    }
+    
+    function viewPastBills() {
+        window.location.href = 'past-bills.html';
+    }
+    </script>
+</body>
+</html>

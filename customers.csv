@@ -1,0 +1,3 @@
+customer_id,customer_name,address_line_one,address_line_two,gstn,contact_number,customer_mail_id,cgst,sgst,igst
+1,Panasonic Appliances(I) Co. Ltd.,NH N05, Sholavaram Village, Ponneri Taluk, Chennai-600067,33AAACI1304E1ZG,+91 9444032200,panasonic@example.com,9,9,0
+2,Samsung Electronics India Pvt Ltd,Samsung Tower, 1st Floor, Golf Course Road, Sector 42, Gurugram-122009,29AAACF4589L1Z8,+91 124 4567000,samsung@example.com,9,9,0

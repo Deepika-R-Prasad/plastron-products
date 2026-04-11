@@ -1,0 +1,1 @@
+invoice_number,billing_date,customer_name,customer_address,gstn,contact_number,purchase_order,dc_number,eway_bill,transporter,igst,cgst,sgst,products_json,pre_total,packing,sub_total,igst_amount,cgst_amount,sgst_amount,grand_total,created_at
