@@ -27,12 +27,12 @@
             width: 200px;
             font-weight: bold;
         }
-        select, input[type="text"], input[type="checkbox"] {
+        select, input[type="text"], input[type="checkbox"], input[type="date"] {
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        select, input[type="text"] {
+        select, input[type="text"], input[type="date"] {
             width: 300px;
         }
         input[type="submit"] {
@@ -64,19 +64,23 @@
             <option value="">-- Select Customer --</option>
         </select>
     </p>
-    <p>
-        <label for="taxInvoice">Tax Invoice number:</label>
-        <input type="text" id="taxInvoice" name="taxInvoice" required placeholder="Enter invoice number"/>
+    <p id="invoiceNumberField">
+        <label for="invoiceNumber" id="invoiceNumberLabel">Tax Invoice number:</label>
+        <input type="text" id="invoiceNumber" name="invoiceNumber" required placeholder="Enter invoice number"/>
+    </p>
+    <p id="invoiceDateField" style="display: none;">
+        <label for="invoiceDate">Invoice Date:</label>
+        <input type="date" id="invoiceDate" name="invoiceDate"/>
     </p>
     <p>
         <label for="purchaseOrder">Purchase Order:</label>
         <input type="text" id="purchaseOrder" name="purchaseOrder" placeholder="Enter PO number"/>
     </p>
-    <p>
+    <p id="dcNumberField">
         <label for="dcNumber">DC Number:</label>
         <input type="text" id="dcNumber" name="dcNumber" placeholder="Enter DC number"/>
     </p>
-    <p>
+    <p id="packingField">
         <label for="packing">Add P&F (1%):</label>
         <input type="checkbox" id="packing" name="packing"/>
     </p>
@@ -150,7 +154,6 @@ async function loadCustomers() {
         const csvText = await response.text();
         customers = parseCSV(csvText);
     } catch (error) {
-        console.error('CSV loading failed:', error.message);
         document.getElementById('customer').innerHTML = '<option value="">Error loading customers. Please ensure customers.csv exists.</option>';
         return;
     }
@@ -178,8 +181,11 @@ document.getElementById('billForm').addEventListener('submit', function(e) {
     }
     
     const customerData = JSON.parse(selectedOption.dataset.customer);
+    const type = getUrlParameter('type');
+    const isProforma = type === 'proforma';
     
     const formData = {
+        type: type || 'bill',
         customerId: customerData.customer_id,
         customerName: customerData.customer_name,
         addressLineOne: customerData.address_line_one,
@@ -190,28 +196,58 @@ document.getElementById('billForm').addEventListener('submit', function(e) {
         cgst: parseFloat(customerData.cgst) || 0,
         sgst: parseFloat(customerData.sgst) || 0,
         igst: parseFloat(customerData.igst) || 0,
-        taxInvoice: document.getElementById('taxInvoice').value,
+        invoiceNumber: document.getElementById('invoiceNumber').value,
         purchaseOrder: document.getElementById('purchaseOrder').value,
         dcNumber: document.getElementById('dcNumber').value,
         packing: document.getElementById('packing').checked,
+        invoiceDate: document.getElementById('invoiceDate').value,
         billingDate: new Date().toISOString().split('T')[0]
     };
     
     // Validate required fields
-    if (!formData.taxInvoice) {
-        showNotification('Please enter tax invoice number');
+    if (!formData.invoiceNumber) {
+        showNotification(isProforma ? 'Please enter proforma invoice number' : 'Please enter tax invoice number');
+        return;
+    }
+    
+    if (isProforma && !formData.invoiceDate) {
+        showNotification('Please enter invoice date');
         return;
     }
     
     // Store in localStorage
     localStorage.setItem('billFormData', JSON.stringify(formData));
     
-    // Navigate to products page
-    window.location.href = 'products.html';
+    // Navigate to products page with type parameter
+    window.location.href = 'products.html?type=' + (type || 'bill');
 });
+
+// Get URL parameter
+function getUrlParameter(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
+
+// Initialize form based on type
+function initForm() {
+    const type = getUrlParameter('type');
+    const isProforma = type === 'proforma';
+    
+    if (isProforma) {
+        // Proforma invoice mode
+        document.getElementById('invoiceNumberLabel').textContent = 'Proforma Invoice number:';
+        document.getElementById('invoiceDateField').style.display = 'block';
+        document.getElementById('dcNumberField').style.display = 'none';
+        document.getElementById('packingField').style.display = 'none';
+        document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('invoiceDate').required = true;
+        document.getElementById('dcNumber').required = false;
+    }
+}
 
 // Load customers on page load
 loadCustomers();
+initForm();
 </script>
 </body>
 </html>

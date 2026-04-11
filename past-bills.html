@@ -377,8 +377,6 @@ function parseCSV(text) {
         
         // Skip if values don't match headers count
         if (values.length !== headers.length) {
-            console.warn(`Row ${i}: Expected ${headers.length} values, got ${values.length}`);
-            console.warn(`Row content: ${lines[i]}`);
             continue;
         }
         
@@ -428,8 +426,8 @@ async function loadBills() {
             createdAt: row.created_at || new Date().toISOString()
         }));
     } catch (error) {
-        console.warn('CSV loading failed (CORS error when opening file://), no bills to display:', error.message);
-        loadedBills = [];
+        document.getElementById('billsTableBody').innerHTML = '<tr><td colspan="5" class="no-bills">No past bills found. Import a CSV file or generate a new bill.</td></tr>';
+        return;
     }
     
     if (loadedBills.length === 0) {
@@ -561,12 +559,7 @@ function importCSV() {
         reader.onload = function(e) {
             try {
                 const csvText = e.target.result;
-                console.log('CSV Text length:', csvText.length);
-                console.log('First 500 chars:', csvText.substring(0, 500));
-                
                 const csvData = parseCSV(csvText);
-                console.log('Parsed CSV data:', csvData);
-                console.log('Number of rows:', csvData.length);
                 
                 if (csvData.length === 0) {
                     showNotification('CSV file is empty or could not be parsed.');
@@ -614,23 +607,15 @@ function importCSV() {
                             createdAt: row.created_at || new Date().toISOString()
                         };
                     } catch (error) {
-                        console.error(`Error parsing row ${index}:`, error);
-                        console.error('Row data:', row);
-                        console.error('products_json value:', row.products_json);
                         return null;
                     }
                 }).filter(bill => bill !== null);
-                
-                console.log('Loaded bills:', loadedBills);
                 
                 // Refresh the display
                 displayBills();
                 showNotification(`Imported ${loadedBills.length} bills from CSV!`);
             } catch (error) {
-                console.error('Error parsing CSV:', error);
-                console.error('Error details:', error.message);
-                console.error('Stack trace:', error.stack);
-                showNotification('Error parsing CSV file. Please check the file format. See console for details.');
+                showNotification('Error parsing CSV file. Please check the file format.');
             }
             
             document.body.removeChild(input);

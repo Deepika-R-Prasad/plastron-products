@@ -65,6 +65,12 @@
             <p>Create a new invoice for a customer</p>
         </div>
         
+        <div class="option-card" onclick="generateProformaInvoice()">
+            <div class="icon">📄</div>
+            <h2>Generate Proforma Invoice</h2>
+            <p>Create a proforma invoice for a customer</p>
+        </div>
+        
         <div class="option-card" onclick="viewPastBills()">
             <div class="icon">📋</div>
             <h2>View Past Bills</h2>
@@ -74,7 +80,11 @@
 
     <script>
     function generateNewBill() {
-        window.location.href = 'generate-bill.html';
+        window.location.href = 'generate-bill.html?type=bill';
+    }
+    
+    function generateProformaInvoice() {
+        window.location.href = 'generate-bill.html?type=proforma';
     }
     
     function viewPastBills() {

@@ -158,6 +158,12 @@ function showNotification(message) {
     }, 3000);
 }
 
+// Get URL parameter
+function getUrlParameter(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
+
 // Get bill form data from localStorage
 function getBillFormData() {
     const formData = localStorage.getItem('billFormData');
@@ -171,16 +177,18 @@ function getBillFormData() {
 
 // Display customer info
 function displayCustomerInfo(formData) {
+    const isProforma = formData.type === 'proforma';
     const customerInfoDiv = document.getElementById('customerInfo');
     customerInfoDiv.innerHTML = `
         <p><strong>Customer:</strong> ${formData.customerName}</p>
         <p><strong>Address:</strong> ${formData.addressLineOne}, ${formData.addressLineTwo}</p>
         <p><strong>GSTN:</strong> ${formData.gstn}</p>
         <p><strong>Contact:</strong> ${formData.contactNumber}</p>
-        <p><strong>Invoice #:</strong> ${formData.taxInvoice}</p>
+        <p><strong>${isProforma ? 'Proforma Invoice' : 'Tax Invoice'} #:</strong> ${formData.invoiceNumber}</p>
+        ${isProforma ? `<p><strong>Invoice Date:</strong> ${formData.invoiceDate}</p>` : ''}
         <p><strong>Purchase Order:</strong> ${formData.purchaseOrder || 'N/A'}</p>
-        <p><strong>DC Number:</strong> ${formData.dcNumber || 'N/A'}</p>
-        <p><strong>Add P&F:</strong> ${formData.packing ? 'Yes (1%)' : 'No'}</p>
+        ${!isProforma ? `<p><strong>DC Number:</strong> ${formData.dcNumber || 'N/A'}</p>` : ''}
+        ${!isProforma ? `<p><strong>Add P&F:</strong> ${formData.packing ? 'Yes (1%)' : 'No'}</p>` : ''}
     `;
 }
 
@@ -192,7 +200,6 @@ async function loadProducts(customerId) {
         const csvText = await response.text();
         products = parseCSV(csvText);
     } catch (error) {
-        console.error('CSV loading failed:', error.message);
         document.getElementById('productTableBody').innerHTML = '<tr><td colspan="4">Error loading products. Please ensure products.csv exists.</td></tr>';
         return;
     }
@@ -227,7 +234,6 @@ async function loadProducts(customerId) {
             tableBody.appendChild(row);
         });
     } catch (error) {
-        console.error('Error loading products:', error);
         document.getElementById('productTableBody').innerHTML = '<tr><td colspan="4">Error loading products</td></tr>';
     }
 }
@@ -267,14 +273,20 @@ document.getElementById('productsForm').addEventListener('submit', function(e) {
     // Store in localStorage
     localStorage.setItem('billFormData', JSON.stringify(formData));
     
-    // Navigate to bill-gen page
-    window.location.href = 'bill-gen.html';
+    // Navigate to appropriate page based on type
+    const type = getUrlParameter('type') || 'bill';
+    if (type === 'proforma') {
+        window.location.href = 'proforma-invoice.html';
+    } else {
+        window.location.href = 'bill-gen.html';
+    }
 });
 
 // Reset button - clear localStorage and go back
 document.getElementById('resetButton').addEventListener('click', function() {
     localStorage.removeItem('billFormData');
-    window.location.href = 'generate-bill.html';
+    const type = getUrlParameter('type') || 'bill';
+    window.location.href = 'generate-bill.html?type=' + type;
 });
 
 // Initialize page
@@ -284,6 +296,11 @@ async function init() {
     
     displayCustomerInfo(formData);
     await loadProducts(formData.customerId);
+    
+    // Update submit button text based on type
+    const type = getUrlParameter('type') || 'bill';
+    const submitButton = document.getElementById('submitButton');
+    submitButton.value = type === 'proforma' ? 'Save & Generate Proforma Invoice' : 'Save & Generate Bill';
 }
 
 // Initialize on page load
