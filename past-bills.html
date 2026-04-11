@@ -344,24 +344,8 @@ function parseCSV(text) {
     const lines = text.split('\n');
     const result = [];
     
-    // Parse header row with quote handling
-    const headers = [];
-    let headerValue = '';
-    let inHeaderQuotes = false;
-    
-    for (let j = 0; j < lines[0].length; j++) {
-        const char = lines[0][j];
-        
-        if (char === '"') {
-            inHeaderQuotes = !inHeaderQuotes;
-        } else if (char === ',' && !inHeaderQuotes) {
-            headers.push(headerValue.trim());
-            headerValue = '';
-        } else {
-            headerValue += char;
-        }
-    }
-    headers.push(headerValue.trim());
+    // Parse header row (simple split - no quotes in header)
+    const headers = lines[0].split(',').map(h => h.trim());
     
     // Parse data rows
     for (let i = 1; i < lines.length; i++) {
@@ -394,6 +378,7 @@ function parseCSV(text) {
         // Skip if values don't match headers count
         if (values.length !== headers.length) {
             console.warn(`Row ${i}: Expected ${headers.length} values, got ${values.length}`);
+            console.warn(`Row content: ${lines[i]}`);
             continue;
         }
         
@@ -576,43 +561,66 @@ function importCSV() {
         reader.onload = function(e) {
             try {
                 const csvText = e.target.result;
+                console.log('CSV Text length:', csvText.length);
+                console.log('First 500 chars:', csvText.substring(0, 500));
+                
                 const csvData = parseCSV(csvText);
+                console.log('Parsed CSV data:', csvData);
+                console.log('Number of rows:', csvData.length);
+                
+                if (csvData.length === 0) {
+                    showNotification('CSV file is empty or could not be parsed.');
+                    document.body.removeChild(input);
+                    return;
+                }
                 
                 // Convert to bill format
-                loadedBills = csvData.filter(row => row.invoice_number).map(row => ({
-                    invoiceNumber: row.invoice_number,
-                    billingDate: row.billing_date,
-                    customerName: row.customer_name,
-                    addressLineOne: row.customer_address ? row.customer_address.split(',')[0] : '',
-                    addressLineTwo: row.customer_address ? row.customer_address.split(',').slice(1).join(',').trim() : '',
-                    gstn: row.gstn,
-                    contactNumber: row.contact_number,
-                    purchaseOrder: row.purchase_order || '',
-                    dcNumber: row.dc_number || '',
-                    eWayBill: row.eway_bill || '',
-                    transporter: row.transporter || '',
-                    igst: row.igst,
-                    cgst: row.cgst,
-                    sgst: row.sgst,
-                    products: row.products_json ? JSON.parse(row.products_json) : [],
-                    totals: {
-                        preTotal: row.pre_total,
-                        packing: row.packing,
-                        subTotal: row.sub_total,
-                        igst: row.igst_amount,
-                        cgst: row.cgst_amount,
-                        sgst: row.sgst_amount,
-                        grandTotal: row.grand_total
-                    },
-                    createdAt: row.created_at || new Date().toISOString()
-                }));
+                loadedBills = csvData.filter(row => row.invoice_number).map((row, index) => {
+                    try {
+                        return {
+                            invoiceNumber: row.invoice_number,
+                            billingDate: row.billing_date,
+                            customerName: row.customer_name,
+                            addressLineOne: row.customer_address ? row.customer_address.split(',')[0] : '',
+                            addressLineTwo: row.customer_address ? row.customer_address.split(',').slice(1).join(',').trim() : '',
+                            gstn: row.gstn,
+                            contactNumber: row.contact_number,
+                            purchaseOrder: row.purchase_order || '',
+                            dcNumber: row.dc_number || '',
+                            eWayBill: row.eway_bill || '',
+                            transporter: row.transporter || '',
+                            igst: row.igst,
+                            cgst: row.cgst,
+                            sgst: row.sgst,
+                            products: row.products_json ? JSON.parse(row.products_json) : [],
+                            totals: {
+                                preTotal: row.pre_total,
+                                packing: row.packing,
+                                subTotal: row.sub_total,
+                                igst: row.igst_amount,
+                                cgst: row.cgst_amount,
+                                sgst: row.sgst_amount,
+                                grandTotal: row.grand_total
+                            },
+                            createdAt: row.created_at || new Date().toISOString()
+                        };
+                    } catch (error) {
+                        console.error(`Error parsing row ${index}:`, error);
+                        console.error('Row data:', row);
+                        return null;
+                    }
+                }).filter(bill => bill !== null);
+                
+                console.log('Loaded bills:', loadedBills);
                 
                 // Refresh the display
                 displayBills();
                 showNotification(`Imported ${loadedBills.length} bills from CSV!`);
             } catch (error) {
                 console.error('Error parsing CSV:', error);
-                showNotification('Error parsing CSV file. Please check the file format.');
+                console.error('Error details:', error.message);
+                console.error('Stack trace:', error.stack);
+                showNotification('Error parsing CSV file. Please check the file format. See console for details.');
             }
             
             document.body.removeChild(input);
