@@ -76,6 +76,12 @@
             <h2>View Past Bills</h2>
             <p>Browse and print previous invoices</p>
         </div>
+        
+        <div class="option-card" onclick="viewPastProformaInvoices()">
+            <div class="icon">📊</div>
+            <h2>View Past Proforma Invoices</h2>
+            <p>Browse and print previous proforma invoices</p>
+        </div>
     </div>
 
     <script>
@@ -89,6 +95,10 @@
     
     function viewPastBills() {
         window.location.href = 'past-bills.html';
+    }
+    
+    function viewPastProformaInvoices() {
+        window.location.href = 'past-proforma-invoices.html';
     }
     </script>
 </body>

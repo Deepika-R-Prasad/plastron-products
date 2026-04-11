@@ -1,0 +1,1 @@
+invoice_number,invoice_date,customer_name,customer_address,gstn,contact_number,purchase_order,igst,cgst,sgst,products_json,sub_total,igst_amount,cgst_amount,sgst_amount,grand_total,created_at

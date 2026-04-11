@@ -84,6 +84,7 @@
     <fieldset>
         <input type="submit" id="submitButton" value="Save & Generate Bill"/>
         <input type="reset" id="resetButton" name="reset" value="Reset"/>
+        <button type="button" class="button" onclick="resetAndHome()">Reset & Home</button>
         <table>
             <thead>
             <tr>
@@ -305,6 +306,14 @@ async function init() {
 
 // Initialize on page load
 init();
+
+// Reset and go to home
+function resetAndHome() {
+    if (confirm('Are you sure you want to reset and go to home? This will clear all cached data.')) {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
+}
 </script>
 </body>
 </html>

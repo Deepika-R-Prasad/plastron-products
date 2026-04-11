@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf-8">
-    <title>Past Bills - Plastron Products</title>
+    <title>Past Proforma Invoices - Plastron Products</title>
     <style>
     .invoice-box {
         max-width: 800px;
@@ -29,7 +29,7 @@
     }
 
     .invoice-box table tr td:nth-child(2) {
-        text-align: right;
+        text-align: left;
     }
 
     .invoice-box table tr.top table td {
@@ -43,20 +43,11 @@
         color: #333;
     }
 
-    .invoice-box table tr.information table td {
-        padding-bottom: 30px;
-    }
-
     .invoice-box table tr.heading td {
         margin: auto;
         background: #eee;
         border-bottom: 1px solid #ddd;
         font-weight: bold;
-    }
-
-    .invoice-box table tr.details td {
-        margin: auto;
-        padding-bottom: 20px;
     }
 
     .invoice-box table tr.item td{
@@ -103,6 +94,19 @@
             text-align: center;
         }
     }
+    @media print {
+        @page {
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+        body {
+            padding-top: 72px;
+            padding-bottom: 72px;
+        }
+        .button {
+            display: none;
+        }
+    }
     #customers {
         font-family: Arial, Helvetica, sans-serif;
         border-collapse: collapse;
@@ -110,7 +114,7 @@
     }
 
     #customers td, #customers th {
-        border: 1px solid #ddd;
+        border: 1px solid #000;
         padding: 8px;
     }
 
@@ -123,19 +127,7 @@
         padding-bottom: 8px;
         text-align: left;
         background-color: #64665A;
-        color: white;
-    }
-    .rtl {
-        direction: rtl;
-        font-family: Tahoma, 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
-    }
-
-    .rtl table {
-        text-align: right;
-    }
-
-    .rtl table tr td:nth-child(2) {
-        text-align: left;
+        color: black;
     }
 
     .bill-list {
@@ -193,7 +185,7 @@
 <body>
 
 <div class="bill-list" id="billListView">
-    <h1>Past Bills</h1>
+    <h1>Past Proforma Invoices</h1>
     <div class="controls">
         <button class="button" onclick="goHome()">Back to Home</button>
         <button class="button" onclick="importCSV()">Import CSV</button>
@@ -229,24 +221,24 @@
                             Kamakshipalya, Bangalore 560079<br>
                             <b>Mobile:</b> +91 9844216696<br>
                             <b>GST No:</b> 29AFVPA8902M1ZS<br>
-                            <b>Our DC No:</b> 1388<br>
                             <b>TIN No:</b> 29821429050
                         </td>
                         <td>
-                            <b>Date/Time:</b> <span id="billingDate"></span><br>
-                            <b>TAX Invoice #:</b> <b><span id="taxInvoice"></span></b><br>
+                            <b>PROFORMA INVOICE</b><br>
                             <b>Name:</b> <span id="customerName"></span><br>
                             <b>Address:</b> <span id="addressLineOne"></span><br>
                                     <span id="addressLineTwo"></span><br>
                             <b>Phone:</b> <span id="contactNumber"></span><br>
                             <b>GSTN:</b> <span id="gstn"></span><br>
-                            <b>Your DC/Purchase Order No:</b> <span id="dcNumber"></span>
+                            <b>Date:</b> <span id="invoiceDate"></span><br>
+                            <b>Your DC/Purchase Order No:</b> <span id="purchaseOrder"></span>
                         </td>
                     </tr>
                 </table>
             </td>
         </tr>
         <table id="customers">
+            <thead>
             <tr>
                 <th>Sl.</th>
                 <th>Description</th>
@@ -254,59 +246,36 @@
                 <th>Unit Price</th>
                 <th>Amount</th>
             </tr>
+            </thead>
             <tbody id="productTableBody">
             </tbody>
+            <tfoot>
             <tr>
-                <td></td>
-                <td></td>
-                <td colspan="2"><b>Subtotal</b></td>
-                <td id="preTotal"></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>Add P/&F(1%)</td>
-                <td></td>
-                <td></td>
-                <td id="packing"></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td></td>
-                <td colspan="2"><b>Total</b></td>
+                <td colspan="4"><b>Subtotal</b></td>
                 <td id="subTotal"></td>
             </tr>
             <tr>
-                <td></td>
-                <td></td>
-                <td colspan="2"><b>IGST@<span id="igstRate"></span>%</b></td>
-                <td id="igst"></td>
+                <td colspan="4"><b>IGST@<span id="igstRate"></span>%</b></td>
+                <td id="igstAmount"></td>
             </tr>
             <tr>
-                <td></td>
-                <td></td>
-                <td colspan="2"><b>CGST@<span id="cgstRate"></span>%</b></td>
-                <td id="cgst"></td>
+                <td colspan="4"><b>CGST@<span id="cgstRate"></span>%</b></td>
+                <td id="cgstAmount"></td>
             </tr>
             <tr>
-                <td></td>
-                <td></td>
-                <td colspan="2"><b>SGST@<span id="sgstRate"></span>%</b></td>
-                <td id="sgst"></td>
+                <td colspan="4"><b>SGST@<span id="sgstRate"></span>%</b></td>
+                <td id="sgstAmount"></td>
             </tr>
             <tr>
-                <th colspan="2">EWAY Bill No: <span id="eway"></span></th>
-                <th colspan="2">Grand Total</th>
+                <th colspan="4">Total</th>
                 <th id="grandTotal"></th>
             </tr>
             <tr>
-                <td colspan="2">Transporter: <span id="vehicle"></span></td>
-                <td colspan="3"></td>
+                <td colspan="3">PROFORMA Invoice No: <span id="proformaInvoice"></span><br><br>Our Bank Details:<br><b>STATE BANK OF INDIA</b>- Hanumanthanagar
+                    <br>IFSC Code: SBIN0040159<br>A/C Name: PLASTRON PRODUCTS<br>A/C No:64085397910</td>
+                <td colspan="2"><center><b><br><br><br><br>for PLASTRON PRODUCTS</b></center></td>
             </tr>
-
-            <tr>
-                <td colspan="3"></td>
-                <td colspan="2"><center><b><br><br>for PLASTRON PRODUCTS</b></center></td>
-            </tr>
+            </tfoot>
     </table>
     </table>
     </div>
@@ -394,30 +363,25 @@ function parseCSV(text) {
 // Load bills from CSV file
 async function loadBills() {
     try {
-        const response = await fetch('past-bills.csv');
+        const response = await fetch('past-proforma-invoices.csv');
         const csvText = await response.text();
         const csvData = parseCSV(csvText);
         
         // Skip header row and convert to bill format
         loadedBills = csvData.filter(row => row.invoice_number).map(row => ({
             invoiceNumber: row.invoice_number,
-            billingDate: row.billing_date,
+            invoiceDate: row.invoice_date,
             customerName: row.customer_name,
             addressLineOne: row.customer_address ? row.customer_address.split(',')[0] : '',
             addressLineTwo: row.customer_address ? row.customer_address.split(',').slice(1).join(',').trim() : '',
             gstn: row.gstn,
             contactNumber: row.contact_number,
             purchaseOrder: row.purchase_order || '',
-            dcNumber: row.dc_number || '',
-            eWayBill: row.eway_bill || '',
-            transporter: row.transporter || '',
             igst: row.igst,
             cgst: row.cgst,
             sgst: row.sgst,
             products: row.products_json ? JSON.parse(row.products_json) : [],
             totals: {
-                preTotal: row.pre_total,
-                packing: row.packing,
                 subTotal: row.sub_total,
                 igst: row.igst_amount,
                 cgst: row.cgst_amount,
@@ -427,12 +391,12 @@ async function loadBills() {
             createdAt: row.created_at || new Date().toISOString()
         }));
     } catch (error) {
-        document.getElementById('billsTableBody').innerHTML = '<tr><td colspan="5" class="no-bills">No past bills found. Import a CSV file or generate a new bill.</td></tr>';
+        document.getElementById('billsTableBody').innerHTML = '<tr><td colspan="5" class="no-bills">No past proforma invoices found. Import a CSV file or generate a new proforma invoice.</td></tr>';
         return;
     }
     
     if (loadedBills.length === 0) {
-        document.getElementById('billsTableBody').innerHTML = '<tr><td colspan="5" class="no-bills">No past bills found. Import a CSV file or generate a new bill.</td></tr>';
+        document.getElementById('billsTableBody').innerHTML = '<tr><td colspan="5" class="no-bills">No past proforma invoices found. Import a CSV file or generate a new proforma invoice.</td></tr>';
         return;
     }
     
@@ -446,7 +410,7 @@ async function loadBills() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${bill.invoiceNumber}</td>
-            <td>${bill.billingDate}</td>
+            <td>${bill.invoiceDate}</td>
             <td>${bill.customerName}</td>
             <td>₹${bill.totals.grandTotal}</td>
             <td><button class="button" onclick="viewBill('${bill.invoiceNumber}')">View</button></td>
@@ -475,23 +439,19 @@ function viewBill(invoiceNumber) {
 // Populate bill with data
 function populateBill(bill) {
     // Customer info
-    document.getElementById('billingDate').textContent = bill.billingDate;
-    document.getElementById('taxInvoice').textContent = bill.invoiceNumber;
     document.getElementById('customerName').textContent = bill.customerName;
     document.getElementById('addressLineOne').textContent = bill.addressLineOne;
     document.getElementById('addressLineTwo').textContent = bill.addressLineTwo;
     document.getElementById('contactNumber').textContent = bill.contactNumber;
     document.getElementById('gstn').textContent = bill.gstn;
-    document.getElementById('dcNumber').textContent = bill.purchaseOrder || bill.dcNumber || '';
+    document.getElementById('invoiceDate').textContent = bill.invoiceDate;
+    document.getElementById('purchaseOrder').textContent = bill.purchaseOrder || 'N/A';
+    document.getElementById('proformaInvoice').textContent = bill.invoiceNumber;
     
     // Tax rates
     document.getElementById('igstRate').textContent = bill.igst;
     document.getElementById('cgstRate').textContent = bill.cgst;
     document.getElementById('sgstRate').textContent = bill.sgst;
-    
-    // E-way and transporter
-    document.getElementById('eway').textContent = bill.eWayBill || '';
-    document.getElementById('vehicle').textContent = bill.transporter || '';
     
     // Product table
     const productTableBody = document.getElementById('productTableBody');
@@ -511,13 +471,11 @@ function populateBill(bill) {
     });
     
     // Totals
-    document.getElementById('preTotal').textContent = bill.totals.preTotal;
-    document.getElementById('packing').textContent = bill.totals.packing;
-    document.getElementById('subTotal').textContent = bill.totals.subTotal;
-    document.getElementById('igst').textContent = bill.totals.igst;
-    document.getElementById('cgst').textContent = bill.totals.cgst;
-    document.getElementById('sgst').textContent = bill.totals.sgst;
-    document.getElementById('grandTotal').textContent = bill.totals.grandTotal;
+    document.getElementById('subTotal').textContent = parseFloat(bill.totals.subTotal).toFixed(2);
+    document.getElementById('igstAmount').textContent = parseFloat(bill.totals.igst).toFixed(2);
+    document.getElementById('cgstAmount').textContent = parseFloat(bill.totals.cgst).toFixed(2);
+    document.getElementById('sgstAmount').textContent = parseFloat(bill.totals.sgst).toFixed(2);
+    document.getElementById('grandTotal').textContent = parseFloat(bill.totals.grandTotal).toFixed(2);
 }
 
 // Go back to list
@@ -582,23 +540,18 @@ function importCSV() {
                         
                         return {
                             invoiceNumber: row.invoice_number,
-                            billingDate: row.billing_date,
+                            invoiceDate: row.invoice_date,
                             customerName: row.customer_name,
                             addressLineOne: row.customer_address ? row.customer_address.split(',')[0] : '',
                             addressLineTwo: row.customer_address ? row.customer_address.split(',').slice(1).join(',').trim() : '',
                             gstn: row.gstn,
                             contactNumber: row.contact_number,
                             purchaseOrder: row.purchase_order || '',
-                            dcNumber: row.dc_number || '',
-                            eWayBill: row.eway_bill || '',
-                            transporter: row.transporter || '',
                             igst: row.igst,
                             cgst: row.cgst,
                             sgst: row.sgst,
                             products: productsJson ? JSON.parse(productsJson) : [],
                             totals: {
-                                preTotal: row.pre_total,
-                                packing: row.packing,
                                 subTotal: row.sub_total,
                                 igst: row.igst_amount,
                                 cgst: row.cgst_amount,
@@ -614,7 +567,7 @@ function importCSV() {
                 
                 // Refresh the display
                 displayBills();
-                showNotification(`Imported ${loadedBills.length} bills from CSV!`);
+                showNotification(`Imported ${loadedBills.length} proforma invoices from CSV!`);
             } catch (error) {
                 showNotification('Error parsing CSV file. Please check the file format.');
             }
@@ -636,7 +589,7 @@ function importCSV() {
 // Display bills from loadedBills array
 function displayBills() {
     if (loadedBills.length === 0) {
-        document.getElementById('billsTableBody').innerHTML = '<tr><td colspan="5" class="no-bills">No past bills found. Import a CSV file or generate a new bill.</td></tr>';
+        document.getElementById('billsTableBody').innerHTML = '<tr><td colspan="5" class="no-bills">No past proforma invoices found. Import a CSV file or generate a new proforma invoice.</td></tr>';
         return;
     }
     
@@ -650,7 +603,7 @@ function displayBills() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${bill.invoiceNumber}</td>
-            <td>${bill.billingDate}</td>
+            <td>${bill.invoiceDate}</td>
             <td>${bill.customerName}</td>
             <td>₹${bill.totals.grandTotal}</td>
             <td><button class="button" onclick="viewBill('${bill.invoiceNumber}')">View</button></td>

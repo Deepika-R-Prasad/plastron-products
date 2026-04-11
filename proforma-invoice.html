@@ -171,32 +171,27 @@
             </tbody>
             <tfoot>
             <tr>
-                <td colspan="3"></td>
-                <td colspan="2"><b>Subtotal</b></td>
+                <td colspan="4"><b>Subtotal</b></td>
                 <td id="subTotal"></td>
             </tr>
             <tr>
-                <td colspan="3"></td>
-                <td colspan="2"><b>IGST@<span id="igstRate"></span>%</b></td>
+                <td colspan="4"><b>IGST@<span id="igstRate"></span>%</b></td>
                 <td id="igstAmount"></td>
             </tr>
             <tr>
-                <td colspan="3"></td>
-                <td colspan="2"><b>CGST@<span id="cgstRate"></span>%</b></td>
+                <td colspan="4"><b>CGST@<span id="cgstRate"></span>%</b></td>
                 <td id="cgstAmount"></td>
             </tr>
             <tr>
-                <td colspan="3"></td>
-                <td colspan="2"><b>SGST@<span id="sgstRate"></span>%</b></td>
+                <td colspan="4"><b>SGST@<span id="sgstRate"></span>%</b></td>
                 <td id="sgstAmount"></td>
             </tr>
             <tr>
-                <th colspan="3">PROFORMA Invoice No: <span id="proformaInvoice"></span></th>
-                <th colspan="2">Total</th>
+                <th colspan="4">Total</th>
                 <th id="grandTotal"></th>
             </tr>
             <tr>
-                <td colspan="3"> Our Bank Details:<br><b>STATE BANK OF INDIA</b>- Hanumanthanagar
+                <td colspan="3">PROFORMA Invoice No: <span id="proformaInvoice"></span><br><br>Our Bank Details:<br><b>STATE BANK OF INDIA</b>- Hanumanthanagar
                     <br>IFSC Code: SBIN0040159<br>A/C Name: PLASTRON PRODUCTS<br>A/C No:64085397910</td>
                 <td colspan="2"><center><b><br><br><br><br>for PLASTRON PRODUCTS</b></center></td>
             </tr>
@@ -204,7 +199,9 @@
     </table>
     </table>
     <button class="button" onclick="printPage()">Print</button>
+    <button class="button" onclick="exportToCSV()">Export to CSV</button>
     <button class="button" onclick="goBack()">Back</button>
+    <button class="button" onclick="resetAndHome()">Reset & Home</button>
     <button class="button" onclick="exitAndClear()">Exit & Clear Data</button>
 </div>
 
@@ -331,9 +328,43 @@ function goBack() {
     window.location.href = 'products.html?type=proforma';
 }
 
+// Export to CSV
+function exportToCSV() {
+    const formData = getBillFormData();
+    if (!formData) return;
+    
+    const totals = calculateTotals(formData);
+    const productsJson = JSON.stringify(formData.products);
+    const address = `${formData.addressLineOne}, ${formData.addressLineTwo}`;
+    
+    const csvHeader = 'invoice_number,invoice_date,customer_name,customer_address,gstn,contact_number,purchase_order,igst,cgst,sgst,products_json,sub_total,igst_amount,cgst_amount,sgst_amount,grand_total,created_at';
+    const csvRow = `${formData.invoiceNumber},${formData.invoiceDate},"${formData.customerName}","${address}",${formData.gstn},${formData.contactNumber},"${formData.purchaseOrder || ''}",${formData.igst},${formData.cgst},${formData.sgst},"${productsJson.replace(/"/g, '""')}",${totals.subTotal},${totals.igst},${totals.cgst},${totals.sgst},${totals.grandTotal},${new Date().toISOString()}`;
+    
+    const csvContent = csvHeader + '\n' + csvRow;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `proforma_invoice_${formData.invoiceNumber}_${formData.invoiceDate}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('Proforma invoice exported to CSV! Manually add this row to past-proforma-invoices.csv file on GitHub.');
+}
+
 // Exit and clear all data
 function exitAndClear() {
     if (confirm('Are you sure you want to exit? This will clear all cached data.')) {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
+}
+
+// Reset and go to home
+function resetAndHome() {
+    if (confirm('Are you sure you want to reset and go to home? This will clear all cached data.')) {
         localStorage.clear();
         window.location.href = 'index.html';
     }

@@ -48,6 +48,19 @@
         input[type="submit"]:hover {
             background-color: #555;
         }
+        .button {
+            background-color: #64665A;
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .button:hover {
+            background-color: #555;
+        }
         .error {
             color: red;
             font-size: 14px;
@@ -85,6 +98,7 @@
         <input type="checkbox" id="packing" name="packing"/>
     </p>
     <p><input type="submit" value="Submit"/></p>
+    <p><button type="button" class="button" onclick="resetAndHome()">Reset & Home</button></p>
 </form>
 
 <script>
@@ -248,6 +262,14 @@ function initForm() {
 // Load customers on page load
 loadCustomers();
 initForm();
+
+// Reset and go to home
+function resetAndHome() {
+    if (confirm('Are you sure you want to reset and go to home? This will clear all cached data.')) {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
+}
 </script>
 </body>
 </html>
