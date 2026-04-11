@@ -343,8 +343,27 @@ function showNotification(message) {
 function parseCSV(text) {
     const lines = text.split('\n');
     const result = [];
-    const headers = lines[0].split(',').map(h => h.trim());
     
+    // Parse header row with quote handling
+    const headers = [];
+    let headerValue = '';
+    let inHeaderQuotes = false;
+    
+    for (let j = 0; j < lines[0].length; j++) {
+        const char = lines[0][j];
+        
+        if (char === '"') {
+            inHeaderQuotes = !inHeaderQuotes;
+        } else if (char === ',' && !inHeaderQuotes) {
+            headers.push(headerValue.trim());
+            headerValue = '';
+        } else {
+            headerValue += char;
+        }
+    }
+    headers.push(headerValue.trim());
+    
+    // Parse data rows
     for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue;
         
@@ -356,7 +375,13 @@ function parseCSV(text) {
             const char = lines[i][j];
             
             if (char === '"') {
-                inQuotes = !inQuotes;
+                // Check for escaped quote ("")
+                if (j + 1 < lines[i].length && lines[i][j + 1] === '"') {
+                    currentValue += '"';
+                    j++; // Skip next quote
+                } else {
+                    inQuotes = !inQuotes;
+                }
             } else if (char === ',' && !inQuotes) {
                 values.push(currentValue.trim());
                 currentValue = '';
@@ -365,6 +390,12 @@ function parseCSV(text) {
             }
         }
         values.push(currentValue.trim());
+        
+        // Skip if values don't match headers count
+        if (values.length !== headers.length) {
+            console.warn(`Row ${i}: Expected ${headers.length} values, got ${values.length}`);
+            continue;
+        }
         
         const obj = {};
         headers.forEach((header, index) => {
@@ -520,13 +551,21 @@ function goHome() {
 
 // Import CSV file
 function importCSV() {
-    const input = document.createElement('input');
+    // Check if input already exists
+    let input = document.getElementById('csvFileInput');
+    if (input) {
+        document.body.removeChild(input);
+    }
+    
+    // Create new input
+    input = document.createElement('input');
     input.type = 'file';
     input.accept = '.csv';
+    input.id = 'csvFileInput';
     input.style.display = 'none';
     document.body.appendChild(input);
     
-    input.onchange = function(e) {
+    input.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) {
             document.body.removeChild(input);
@@ -585,7 +624,7 @@ function importCSV() {
         };
         
         reader.readAsText(file);
-    };
+    });
     
     input.click();
 }
