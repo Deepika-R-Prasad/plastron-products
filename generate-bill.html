@@ -198,6 +198,11 @@ document.getElementById('billForm').addEventListener('submit', function(e) {
     const type = getUrlParameter('type');
     const isProforma = type === 'proforma';
     
+    // Parse tax values carefully - trim and convert to float
+    const cgstValue = parseFloat(String(customerData.cgst).trim()) || 0;
+    const sgstValue = parseFloat(String(customerData.sgst).trim()) || 0;
+    const igstValue = parseFloat(String(customerData.igst).trim()) || 0;
+    
     const formData = {
         type: type || 'bill',
         customerId: customerData.customer_id,
@@ -207,9 +212,9 @@ document.getElementById('billForm').addEventListener('submit', function(e) {
         gstn: customerData.gstn,
         contactNumber: customerData.contact_number,
         customerMailId: customerData.customer_mail_id,
-        cgst: parseFloat(customerData.cgst) || 0,
-        sgst: parseFloat(customerData.sgst) || 0,
-        igst: parseFloat(customerData.igst) || 0,
+        cgst: cgstValue,
+        sgst: sgstValue,
+        igst: igstValue,
         invoiceNumber: document.getElementById('invoiceNumber').value,
         purchaseOrder: document.getElementById('purchaseOrder').value,
         dcNumber: document.getElementById('dcNumber').value,
