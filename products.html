@@ -229,7 +229,7 @@ async function loadProducts(customerId) {
                 <td>${product.code_number}</td>
                 <td>${parseFloat(product.unit_price).toFixed(2)}</td>
                 <td>
-                    <input type="number" name="quantity_${product.part_id}" class="quantity-input" min="0" placeholder="0" data-part-id="${product.part_id}" data-unit-price="${product.unit_price}" data-part-name="${product.part_name}" data-code-number="${product.code_number}"/>
+                    <input type="number" name="quantity_${product.part_id}" class="quantity-input" min="0" placeholder="0" data-part-id="${product.part_id}" data-part-name="${product.part_name}" data-code-number="${product.code_number}" data-unit-price="${product.unit_price}"/>
                 </td>
             `;
             tableBody.appendChild(row);
