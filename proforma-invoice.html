@@ -240,13 +240,20 @@ function getBillFormData() {
         window.location.href = 'index.html';
         return null;
     }
-    const parsed = JSON.parse(formData);
-    if (parsed.type !== 'proforma') {
-        showNotification('Invalid data type. Please start from index.html');
+    try {
+        const parsed = JSON.parse(formData);
+        if (parsed.type !== 'proforma') {
+            showNotification('Invalid data type. Please start from index.html');
+            window.location.href = 'index.html';
+            return null;
+        }
+        return parsed;
+    } catch (error) {
+        showNotification('Error reading data. Please start over.');
+        localStorage.removeItem('billFormData');
         window.location.href = 'index.html';
         return null;
     }
-    return parsed;
 }
 
 // Calculate totals
@@ -286,10 +293,10 @@ function populateBill(formData) {
     document.getElementById('purchaseOrder').textContent = formData.purchaseOrder || 'N/A';
     document.getElementById('proformaInvoice').textContent = formData.invoiceNumber;
     
-    // Tax rates
-    document.getElementById('igstRate').textContent = formData.igst;
-    document.getElementById('cgstRate').textContent = formData.cgst;
-    document.getElementById('sgstRate').textContent = formData.sgst;
+    // Tax rates - Display as integers without decimal
+    document.getElementById('igstRate').textContent = parseInt(formData.igst);
+    document.getElementById('cgstRate').textContent = parseInt(formData.cgst);
+    document.getElementById('sgstRate').textContent = parseInt(formData.sgst);
     
     // Calculate totals
     const totals = calculateTotals(formData);
@@ -337,8 +344,8 @@ function exportToCSV() {
     const productsJson = JSON.stringify(formData.products);
     const address = `${formData.addressLineOne}, ${formData.addressLineTwo}`;
     
-    const csvHeader = 'invoice_number,invoice_date,customer_name,customer_address,gstn,contact_number,purchase_order,igst,cgst,sgst,products_json,sub_total,igst_amount,cgst_amount,sgst_amount,grand_total,created_at';
-    const csvRow = `${formData.invoiceNumber},${formData.invoiceDate},"${formData.customerName}","${address}",${formData.gstn},${formData.contactNumber},"${formData.purchaseOrder || ''}",${formData.igst},${formData.cgst},${formData.sgst},"${productsJson.replace(/"/g, '""')}",${totals.subTotal},${totals.igst},${totals.cgst},${totals.sgst},${totals.grandTotal},${new Date().toISOString()}`;
+    const csvHeader = 'invoice_number,invoice_date,customer_name,customer_address,gstn,contact_number,purchase_order,igst,cgst,sgst,products_json,sub_total,igst_amount,cgst_amount,sgst_amount,grand_total';
+    const csvRow = `${formData.invoiceNumber},${formData.invoiceDate},"${formData.customerName}","${address}",${formData.gstn},${formData.contactNumber},"${formData.purchaseOrder || ''}",${formData.igst},${formData.cgst},${formData.sgst},"${productsJson}",${totals.subTotal},${totals.igst},${totals.cgst},${totals.sgst},${totals.grandTotal}`;
     
     const csvContent = csvHeader + '\n' + csvRow;
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -376,6 +383,9 @@ function init() {
     if (!formData) return;
     
     populateBill(formData);
+    
+    // Keep data in localStorage for back navigation and export functionality
+    // Do NOT remove it here - let the user manage their session
 }
 
 // Initialize on page load
